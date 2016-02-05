@@ -9,18 +9,28 @@ import android.widget.TextView;
 import com.koushikdutta.ion.Ion;
 import com.koushikdutta.ion.future.ResponseFuture;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.UUID;
 
+import no.vg.android.ionvsretrofit.comms.RetrofitClient;
 import no.vg.android.ionvsretrofit.core.Action;
 import no.vg.android.ionvsretrofit.entities.PodcastEpisodeJsonListProxy;
 import no.vg.android.ionvsretrofit.viewmodels.VolleyRequestActivityViewModel;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class MainActivity extends Activity {
-    private static final int SPEW_COUNT = 40;
+    private static final int SPEW_COUNT = 1;
     //private final String Url = "http://httpbin.org/get";
     //private final String Url = "http://httpbin.org/delay/1";
-    private final String UrlSmall = "http://" + App.SERVER_HOST + ":" + App.APP_PORT + "/jsonSmall";
-    private final String UrlLarge = "http://" + App.SERVER_HOST + ":" + App.APP_PORT + "/jsonLarge";
+    private final String UrlBase = "http://" + App.SERVER_HOST + ":" + App.APP_PORT;
+    private final String UrlSmall = UrlBase + "/jsonSmall";
+    private final String UrlLarge = UrlBase + "/jsonLarge";
+
     private VolleyRequestActivityViewModel _model;
     private static final String TAG = "OVDR";
     private boolean mDoLog = true;
@@ -142,6 +152,34 @@ public class MainActivity extends Activity {
         onRequestStart(req);
     }
 
+    private void performRetrofitRequest(String path) {
+        Retrofit retrofit = new Retrofit.Builder()
+            .baseUrl(UrlBase)
+            .build();
+        RetrofitClient client = retrofit.create(RetrofitClient.class);
+        Call<ResponseBody> res = client.getString(path, UUID.randomUUID().toString());
+
+        final RequestToken req = new RequestToken();
+        req.onStart();
+        onRequestStart(req);
+        res.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                try {
+                    Log.i("ASDF", response.body().string());
+                } catch (Exception e) {
+                    Log.w(TAG, e.getMessage(), e);
+                }
+                onRequestDone(req);
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+
+            }
+        });
+    }
+
     public void onIonClicked(final View view) {
         spewRequests(() -> performIonStringAsync(UrlSmall));
     }
@@ -155,10 +193,11 @@ public class MainActivity extends Activity {
     }
 
     public void onRetrofitClicked(final View view) {
-
+        spewRequests(() -> performRetrofitRequest("jsonSmall"));
     }
 
     public void onRetrofitLargeStringClicked(View view) {
+        spewRequests(() -> performRetrofitRequest("jsonLarge"));
     }
 
     public void onRetrofitLargeGsonClicked(View view) {
