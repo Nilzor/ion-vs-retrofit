@@ -12,13 +12,15 @@ import com.koushikdutta.ion.future.ResponseFuture;
 import java.util.ArrayList;
 
 import no.vg.android.ionvsretrofit.core.Action;
+import no.vg.android.ionvsretrofit.entities.PodcastEpisodeJsonListProxy;
 import no.vg.android.ionvsretrofit.viewmodels.VolleyRequestActivityViewModel;
 
 public class MainActivity extends Activity {
     private static final int SPEW_COUNT = 40;
     //private final String Url = "http://httpbin.org/get";
     //private final String Url = "http://httpbin.org/delay/1";
-    private final String Url = "http://" + App.SERVER_HOST + ":" + App.APP_PORT + "/jsonSmall";
+    private final String UrlSmall = "http://" + App.SERVER_HOST + ":" + App.APP_PORT + "/jsonSmall";
+    private final String UrlLarge = "http://" + App.SERVER_HOST + ":" + App.APP_PORT + "/jsonLarge";
     private VolleyRequestActivityViewModel _model;
     private static final String TAG = "OVDR";
     private boolean mDoLog = true;
@@ -79,11 +81,23 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void onRequestStart(RequestToken req) {
+        if (mDoLog) {
+            long time = System.currentTimeMillis() - mStartTime;
+            Log.i(TAG + "Z", String.format("S:%02d:%04d", req.id, time));
+        }
+    }
+
     private void onRequestDone(RequestToken req) {
         req.onDone();
         mRequests.add(req);
         if (mRequests.size() == SPEW_COUNT) {
             onAllRequestsDone();
+        }
+
+        if (mDoLog){
+            long time = System.currentTimeMillis() - mStartTime;
+            Log.i(TAG + "Z", String.format("E:%02d:%04d", req.id, time));
         }
     }
 
@@ -101,46 +115,43 @@ public class MainActivity extends Activity {
         return max;
     }
 
-    /*private void performIonGsonHttpAsync() {
+    private void performIonGsonHttpAsync(String urlBase) {
         final RequestToken req = new RequestToken();
-        ResponseFuture<TestServiceResponse> future = Ion.with(this).load(Url).as(TestServiceResponse.class);
+        String url = urlBase + "?"  + mCacheBreaker++;
+        ResponseFuture<PodcastEpisodeJsonListProxy> future = Ion.with(this).load(url).as(PodcastEpisodeJsonListProxy.class);
         req.onStart();
-        future.setCallback((e, testServiceResponse) -> {
+        onRequestStart(req);
+        future.setCallback((e, res) -> {
             onRequestDone(req);
-            Log.d(TAG, String.format("GsonReq %02d finished in %04d ms", req.id, req.getDuration()));
-        });
-        Log.d(TAG, String.format("GsonReq %02d started", req.id));
-    }*/
-
-    private void performIonStringAsync() {
-        final RequestToken req = new RequestToken();
-        String url = Url + "?"  + mCacheBreaker++;
-        ResponseFuture<String> future = Ion.with(this).load(url).setTimeout(5000).noCache().asString();
-        req.onStart();
-        future.setCallback((e, testServiceResponse) -> {
-            onRequestDone(req);
-            if (mDoLog){
-                long time = System.currentTimeMillis() - mStartTime;
-                Log.i(TAG + "Z", String.format("E:%02d:%04d", req.id, time));
-                if (e == null)  Log.d(TAG, "Content: " + testServiceResponse);
+            if (e != null) Log.w(TAG, e.getMessage(), e);
+            else {
+                //Log.i(TAG+"Q", String.format("%s,%s,%s,%s", res.description, res.iTunesLink, res.lastModified, res.episodes.get(0).title));
             }
-            if (e != null) Log.e(TAG, e.getMessage(), e);
         });
-        if (mDoLog) {
-            long time = System.currentTimeMillis() - mStartTime;
-            Log.i(TAG + "Z", String.format("S:%02d:%04d", req.id, time));
-        }
+    }
+
+    private void performIonStringAsync(String urlBase) {
+        final RequestToken req = new RequestToken();
+        String url = urlBase + "?"  + mCacheBreaker++;
+        ResponseFuture<String> future = Ion.with(this).load(url).setTimeout(15000).noCache().asString();
+        req.onStart();
+        future.setCallback((e, testServiceResponse) -> {
+            onRequestDone(req);
+            if (e != null) Log.w(TAG, e.getMessage(), e);
+        });
+        onRequestStart(req);
     }
 
     public void onIonClicked(final View view) {
-        Log.i(TAG, "Staring spew of " + SPEW_COUNT + " requests...");
-        spewRequests(this::performIonStringAsync);
+        spewRequests(() -> performIonStringAsync(UrlSmall));
     }
 
     public void onIonLargeStringClicked(View view) {
+        spewRequests(() -> performIonStringAsync(UrlLarge));
     }
 
     public void onIonLargeGsonClicked(View view) {
+        spewRequests(() -> performIonGsonHttpAsync(UrlLarge));
     }
 
     public void onRetrofitClicked(final View view) {
