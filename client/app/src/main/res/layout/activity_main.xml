@@ -25,10 +25,46 @@
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
         android:minWidth="100dp"
+        android:text="ion - large - string"
+        android:layout_gravity="center_horizontal"
+        android:onClick="onIonLargeStringClicked"
+        />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:minWidth="100dp"
+        android:text="ion - large - gson"
+        android:layout_gravity="center_horizontal"
+        android:onClick="onIonLargeGsonClicked"
+        />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:minWidth="100dp"
         android:text="Retrofit"
         android:id="@+id/retrofitButton"
         android:layout_gravity="center_horizontal"
         android:onClick="onRetrofitClicked"
+        />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:minWidth="100dp"
+        android:text="Retrofit - large - String"
+        android:layout_gravity="center_horizontal"
+        android:onClick="onRetrofitLargeStringClicked"
+        />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:minWidth="100dp"
+        android:text="Retrofit - large - Gson"
+        android:layout_gravity="center_horizontal"
+        android:onClick="onRetrofitLargeGsonClicked"
         />
     <LinearLayout android:orientation="horizontal" android:layout_width="match_parent"
                   android:layout_height="wrap_content" android:id="@+id/linearLayout"
