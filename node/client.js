@@ -1,9 +1,10 @@
 var http = require('http');
 
-console.log("Initiating requests...");
+var doneCount = 0;
+var maxCount = 40;
+console.log("Doing " + maxCount + " requests...");
 
 var doRequest = (path) => {
-
     var useProxy = true;
     var proxyHost = 'localhost';
     var proxyPort = 8899;
@@ -32,10 +33,10 @@ var doRequest = (path) => {
         var data = '';
         res.on('data', (chunk) => {
             data += chunk;
-            console.log("Got: " + chunk);
+            //console.log("Got: " + chunk);
         });
         res.on('end', () => {
-            console.log("Done");
+            doneCount++;
         });
     });
 
@@ -46,6 +47,8 @@ var doRequest = (path) => {
     req.end();
 };
 
-for (var i = 0; i < 40; i++) {
-    doRequest('/jsonSmall/' + i);
+for (var i = 0; i < maxCount; i++) {
+    doRequest('/jsonLarge/' + i);
 }
+
+console.log("Done with " + maxCount + " requests");
