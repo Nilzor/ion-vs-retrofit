@@ -9,7 +9,6 @@ import android.widget.TextView;
 import com.koushikdutta.ion.Ion;
 import com.koushikdutta.ion.future.ResponseFuture;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -22,11 +21,10 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends Activity {
-    private static final int SPEW_COUNT = 1;
-    //private final String Url = "http://httpbin.org/get";
-    //private final String Url = "http://httpbin.org/delay/1";
+    private static final int SPEW_COUNT = 40;
     private final String UrlBase = "http://" + App.SERVER_HOST + ":" + App.APP_PORT;
     private final String UrlSmall = UrlBase + "/jsonSmall";
     private final String UrlLarge = UrlBase + "/jsonLarge";
@@ -152,30 +150,31 @@ public class MainActivity extends Activity {
         onRequestStart(req);
     }
 
-    private void performRetrofitRequest(String path) {
+    private <T> void performRetrofitRequest(String path, Class<T> retType) {
         Retrofit retrofit = new Retrofit.Builder()
             .baseUrl(UrlBase)
+            .addConverterFactory(GsonConverterFactory.create())
             .build();
         RetrofitClient client = retrofit.create(RetrofitClient.class);
-        Call<ResponseBody> res = client.getString(path, UUID.randomUUID().toString());
+        Call res;
+        if (retType == ResponseBody.class)
+            res = client.getString(path, UUID.randomUUID().toString());
+        else
+            res = client.getDecoded(path, UUID.randomUUID().toString());
 
         final RequestToken req = new RequestToken();
         req.onStart();
         onRequestStart(req);
-        res.enqueue(new Callback<ResponseBody>() {
+        res.enqueue(new Callback() {
+
             @Override
-            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                try {
-                    Log.i("ASDF", response.body().string());
-                } catch (Exception e) {
-                    Log.w(TAG, e.getMessage(), e);
-                }
+            public void onResponse(Call call, Response response) {
                 onRequestDone(req);
             }
 
             @Override
-            public void onFailure(Call<ResponseBody> call, Throwable t) {
-
+            public void onFailure(Call call, Throwable t) {
+                Log.e(TAG, t.getMessage(), t);
             }
         });
     }
@@ -193,14 +192,15 @@ public class MainActivity extends Activity {
     }
 
     public void onRetrofitClicked(final View view) {
-        spewRequests(() -> performRetrofitRequest("jsonSmall"));
+        spewRequests(() -> performRetrofitRequest("jsonSmall", ResponseBody.class));
     }
 
     public void onRetrofitLargeStringClicked(View view) {
-        spewRequests(() -> performRetrofitRequest("jsonLarge"));
+        spewRequests(() -> performRetrofitRequest("jsonLarge", ResponseBody.class));
     }
 
     public void onRetrofitLargeGsonClicked(View view) {
+        spewRequests(() -> performRetrofitRequest("jsonLarge", PodcastEpisodeJsonListProxy.class));
     }
 
     private static class RequestToken {

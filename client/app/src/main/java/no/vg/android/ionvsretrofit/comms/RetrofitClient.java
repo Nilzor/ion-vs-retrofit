@@ -9,7 +9,7 @@ import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public interface RetrofitClient {
-    @GET("/")
+    @GET("{path}")
     Call<PodcastEpisodeJsonListProxy> getDecoded(@Path("path") String path, @Query("cacheBreaker") String cacheBreaker);
 
     @GET("{path}")
