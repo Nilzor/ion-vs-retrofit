@@ -4,7 +4,7 @@ var doneCount = 0;
 var maxCount = 40;
 console.log("Doing " + maxCount + " requests...");
 
-var doRequest = (path) => {
+var doRequest = (path, reqId) => {
     var useProxy = true;
     var proxyHost = 'localhost';
     var proxyPort = 8899;
@@ -28,7 +28,6 @@ var doRequest = (path) => {
         options.path = targetPath;
     }
 
-
     var req = http.request(options, function(res) {
         var data = '';
         res.on('data', (chunk) => {
@@ -37,6 +36,12 @@ var doRequest = (path) => {
         });
         res.on('end', () => {
             doneCount++;
+            var time = (new Date).getTime() - millisStart;
+            console.log("E:%d:%d:Total: ", reqId, time, doneCount);
+            if (doneCount == maxCount) {
+                var time = (new Date).getTime() - millisStart;
+                console.log("Done with all " + doneCount + " in " + time + "ms");
+            }
         });
     });
 
@@ -45,10 +50,13 @@ var doRequest = (path) => {
     });
 
     req.end();
+    var time = (new Date).getTime() - millisStart;
+    console.log("S:%d:%d", reqId, time);
 };
 
+var millisStart = (new Date).getTime();
 for (var i = 0; i < maxCount; i++) {
-    doRequest('/jsonLarge/' + i);
+    doRequest('/jsonSmall/' + i, i);
 }
 
-console.log("Done with " + maxCount + " requests");
+console.log("Done with init");
