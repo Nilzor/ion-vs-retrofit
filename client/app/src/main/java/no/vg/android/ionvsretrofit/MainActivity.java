@@ -12,7 +12,7 @@ import com.koushikdutta.ion.future.ResponseFuture;
 import java.util.ArrayList;
 import java.util.UUID;
 
-import no.vg.android.ionvsretrofit.comms.RetrofitClient;
+import no.vg.android.ionvsretrofit.comms.Retrofit2Client;
 import no.vg.android.ionvsretrofit.core.Action;
 import no.vg.android.ionvsretrofit.entities.PodcastEpisodeJsonListProxy;
 import no.vg.android.ionvsretrofit.viewmodels.VolleyRequestActivityViewModel;
@@ -104,8 +104,9 @@ public class MainActivity extends Activity {
         }
 
         if (mDoLog){
-            long time = System.currentTimeMillis() - mStartTime;
-            Log.i(TAG + "Z", String.format("E:%02d:%04d", req.id, time));
+            long relativeStartTime = req.startTime - mStartTime;
+            long relativeEndTime = req.endTime - mStartTime;
+            Log.i(TAG + "Z", String.format("REQ END,%02d,%05d,%05d", req.id, relativeStartTime, relativeEndTime));
         }
     }
 
@@ -155,7 +156,7 @@ public class MainActivity extends Activity {
             .baseUrl(UrlBase)
             .addConverterFactory(GsonConverterFactory.create())
             .build();
-        RetrofitClient client = retrofit.create(RetrofitClient.class);
+        Retrofit2Client client = retrofit.create(Retrofit2Client.class);
         Call res;
         if (retType == ResponseBody.class)
             res = client.getString(path, UUID.randomUUID().toString());
