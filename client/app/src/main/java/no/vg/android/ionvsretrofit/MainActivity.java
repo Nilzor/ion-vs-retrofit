@@ -12,16 +12,15 @@ import com.koushikdutta.ion.future.ResponseFuture;
 import java.util.ArrayList;
 import java.util.UUID;
 
-import no.vg.android.ionvsretrofit.comms.Retrofit2Client;
+import no.vg.android.ionvsretrofit.comms.Retrofit1Client;
 import no.vg.android.ionvsretrofit.core.Action;
 import no.vg.android.ionvsretrofit.entities.PodcastEpisodeJsonListProxy;
 import no.vg.android.ionvsretrofit.viewmodels.VolleyRequestActivityViewModel;
-import okhttp3.ResponseBody;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit.Callback;
+import retrofit.RestAdapter;
+import retrofit.RetrofitError;
+import retrofit.client.Client;
+import retrofit.client.Response;
 
 public class MainActivity extends Activity {
     private static final int SPEW_COUNT = 40;
@@ -152,32 +151,39 @@ public class MainActivity extends Activity {
     }
 
     private <T> void performRetrofitRequest(String path, Class<T> retType) {
-        Retrofit retrofit = new Retrofit.Builder()
-            .baseUrl(UrlBase)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build();
-        Retrofit2Client client = retrofit.create(Retrofit2Client.class);
-        Call res;
-        if (retType == ResponseBody.class)
-            res = client.getString(path, UUID.randomUUID().toString());
-        else
-            res = client.getDecoded(path, UUID.randomUUID().toString());
+        RestAdapter adapter = new RestAdapter.Builder().setEndpoint(UrlBase).build();
+        Retrofit1Client client = adapter.create(Retrofit1Client.class);
 
         final RequestToken req = new RequestToken();
         req.onStart();
         onRequestStart(req);
-        res.enqueue(new Callback() {
 
+        Callback<String> resStr = new Callback<String>() {
             @Override
-            public void onResponse(Call call, Response response) {
+            public void success(String s, Response response) {
                 onRequestDone(req);
             }
 
             @Override
-            public void onFailure(Call call, Throwable t) {
-                Log.e(TAG, t.getMessage(), t);
+            public void failure(RetrofitError error) {
+                Log.e(TAG, error.getMessage(), error);
             }
-        });
+        };
+        Callback<PodcastEpisodeJsonListProxy> resObj = new Callback<PodcastEpisodeJsonListProxy>() {
+            @Override
+            public void success(PodcastEpisodeJsonListProxy podcastEpisodeJsonListProxy, Response response) {
+                onRequestDone(req);
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                Log.e(TAG, error.getMessage(), error);
+            }
+        };
+        if (retType == String.class)
+            client.getString(path, UUID.randomUUID().toString(), resStr);
+        else
+            client.getDecoded(path, UUID.randomUUID().toString(), resObj);
     }
 
     public void onIonClicked(final View view) {
@@ -193,11 +199,11 @@ public class MainActivity extends Activity {
     }
 
     public void onRetrofitClicked(final View view) {
-        spewRequests(() -> performRetrofitRequest("jsonSmall", ResponseBody.class));
+        spewRequests(() -> performRetrofitRequest("jsonSmall", String.class));
     }
 
     public void onRetrofitLargeStringClicked(View view) {
-        spewRequests(() -> performRetrofitRequest("jsonLarge", ResponseBody.class));
+        spewRequests(() -> performRetrofitRequest("jsonLarge", String.class));
     }
 
     public void onRetrofitLargeGsonClicked(View view) {

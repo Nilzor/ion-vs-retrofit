@@ -10,7 +10,7 @@ import com.squareup.otto.Bus;
 public class App extends Application {
     public static Bus EventBus;
     private Context AppContext;
-    public static String SERVER_HOST =  "10.200.204.239";
+    public static String SERVER_HOST =  "10.200.204.132";
     public static int APP_PORT = 8000;
     public static int PROXY_PORT = 8899;
 
