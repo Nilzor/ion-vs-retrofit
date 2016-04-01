@@ -4,13 +4,19 @@ var ctr = 1;
 
 // Configure our HTTP server to respond with Hello World to all requests.
 var server = http.createServer(function (request, response) {
+    var thisId = ctr;
     console.log("Got req " + ctr++);
+
+
     if (request.url.startsWith("/jsonSmall")) {
         var smallObject = getSmallObject(request);
         writeJson(smallObject, response);
     }
     else if (request.url.startsWith("/jsonLarge")) {
-        writeFile(response);
+        setTimeout(() => {
+            console.log ("Replying " + thisId);
+            writeFile(response);
+        }, 600);
     }
     else {
         response.writeHead(404, {"Content-Type": "text/plain"});
